@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radial Time Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: system-ui;
+            color: #fff;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .watch-container {
+            background: #2a2a3a;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        #watchface {
+            display: block;
+            border: 1px solid #444;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .time-display {
+            font-size: 48px;
+            font-weight: 200;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .slider-container label {
+            width: 80px;
+            text-align: right;
+            color: #888;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: #444;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        .slider-value {
+            width: 30px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #444;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        button.active {
+            background: #4a9eff;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            max-width: 600px;
+            font-size: 11px;
+            color: #888;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>RADIAL TIME</h1>
+    <p class="subtitle">Pebble 2 Watchface Simulator</p>
+
+    <div class="watch-container">
+        <canvas id="watchface" width="144" height="168"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="time-display" id="timeDisplay">12:00</div>
+        <div class="slider-container">
+            <label>Hour</label>
+            <input type="range" id="hourSlider" min="1" max="12" value="12">
+            <span class="slider-value" id="hourValue">12</span>
+        </div>
+        <div class="slider-container">
+            <label>Minute</label>
+            <input type="range" id="minSlider" min="0" max="59" value="0">
+            <span class="slider-value" id="minValue">00</span>
+        </div>
+        <div class="button-row">
+            <button id="realTimeBtn" class="active">Real Time</button>
+            <button onclick="setTime(3,15)">3:15</button>
+            <button onclick="setTime(6,30)">6:30</button>
+            <button onclick="setTime(9,45)">9:45</button>
+            <button onclick="setTime(12,0)">12:00</button>
+        </div>
+    </div>
+
+    <div class="info" id="debugInfo"></div>
+
+    <script>
+        const canvas = document.getElementById('watchface');
+        const ctx = canvas.getContext('2d');
+
+        // ===== CONFIGURABLE DIMENSIONS =====
+        const W = 144;
+        const H = 168;
+        const CX = W / 2;  // 72
+        const CY = H / 2;  // 84
+        const LINE_WIDTH = 3;
+
+        // Inner size
+        const INNER_V = Math.floor(H * 0.30);
+        const INNER_H = Math.floor(W * 0.30);
+
+        // Inner bounds
+        const INNER_TOP = CY - INNER_V;     // 42
+        const INNER_BOTTOM = CY + INNER_V;  // 126
+        const INNER_LEFT = CX - INNER_H;    // 36
+        const INNER_RIGHT = CX + INNER_H;   // 108
+
+        // Inner points - calculated based on radial line intersections
+        const INNER = [
+            { x: CX, y: INNER_TOP },           // 0: center of top edge
+            { x: 96, y: INNER_TOP },           // 1: right end of top edge
+            { x: INNER_RIGHT, y: 59 },         // 2: top of right edge
+            { x: INNER_RIGHT, y: CY },         // 3: center of right edge
+            { x: INNER_RIGHT, y: 109 },        // 4: bottom of right edge
+            { x: 96, y: INNER_BOTTOM },        // 5: right end of bottom edge
+            { x: CX, y: INNER_BOTTOM },        // 6: center of bottom edge
+            { x: 48, y: INNER_BOTTOM },        // 7: left end of bottom edge
+            { x: INNER_LEFT, y: 109 },         // 8: bottom of left edge
+            { x: INNER_LEFT, y: CY },          // 9: center of left edge
+            { x: INNER_LEFT, y: 59 },          // 10: top of left edge
+            { x: 48, y: INNER_TOP },           // 11: left end of top edge
+        ];
+
+        // Screen edge points
+        const EDGE = [
+            { x: 72, y: 0 }, { x: 120, y: 0 }, { x: 144, y: 35 }, { x: 144, y: 84 },
+            { x: 144, y: 133 }, { x: 120, y: 168 }, { x: 72, y: 168 }, { x: 24, y: 168 },
+            { x: 0, y: 133 }, { x: 0, y: 84 }, { x: 0, y: 35 }, { x: 24, y: 0 }
+        ];
+
+        const CORNERS = [{ x: W, y: 0 }, { x: W, y: H }, { x: 0, y: H }, { x: 0, y: 0 }];
+        const SEG_CORNER = [-1, 0, -1, -1, 1, -1, -1, 2, -1, -1, 3, -1];
+
+        let currentHour = 12, currentMin = 0;
+        let realTimeMode = true;
+
+        function fillOuterSegment(seg) {
+            const p1 = EDGE[seg], p2 = EDGE[(seg + 1) % 12];
+            const i1 = INNER[seg], i2 = INNER[(seg + 1) % 12];
+            const corner = SEG_CORNER[seg];
+
+            ctx.beginPath();
+            ctx.moveTo(i1.x, i1.y);
+            ctx.lineTo(p1.x, p1.y);
+            if (corner !== -1) ctx.lineTo(CORNERS[corner].x, CORNERS[corner].y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(i2.x, i2.y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function fillInnerSegment(seg) {
+            const p1 = INNER[seg], p2 = INNER[(seg + 1) % 12];
+            ctx.beginPath();
+            ctx.moveTo(CX, CY);
+            ctx.lineTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawLine(seg, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = LINE_WIDTH;
+            ctx.beginPath();
+            ctx.moveTo(CX, CY);
+            ctx.lineTo(EDGE[seg].x, EDGE[seg].y);
+            ctx.stroke();
+        }
+
+        function drawInnerShape() {
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = LINE_WIDTH;
+
+            // Top edge (horizontal): 11 to 1
+            ctx.beginPath();
+            ctx.moveTo(INNER[11].x, INNER[11].y);
+            ctx.lineTo(INNER[1].x, INNER[1].y);
+            ctx.stroke();
+
+            // Right edge (vertical): 2 to 4
+            ctx.beginPath();
+            ctx.moveTo(INNER[2].x, INNER[2].y);
+            ctx.lineTo(INNER[4].x, INNER[4].y);
+            ctx.stroke();
+
+            // Bottom edge (horizontal): 7 to 5
+            ctx.beginPath();
+            ctx.moveTo(INNER[7].x, INNER[7].y);
+            ctx.lineTo(INNER[5].x, INNER[5].y);
+            ctx.stroke();
+
+            // Left edge (vertical): 10 to 8
+            ctx.beginPath();
+            ctx.moveTo(INNER[10].x, INNER[10].y);
+            ctx.lineTo(INNER[8].x, INNER[8].y);
+            ctx.stroke();
+
+            // Corner connectors (diagonal)
+            ctx.beginPath();
+            ctx.moveTo(INNER[1].x, INNER[1].y);
+            ctx.lineTo(INNER[2].x, INNER[2].y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(INNER[4].x, INNER[4].y);
+            ctx.lineTo(INNER[5].x, INNER[5].y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(INNER[7].x, INNER[7].y);
+            ctx.lineTo(INNER[8].x, INNER[8].y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(INNER[10].x, INNER[10].y);
+            ctx.lineTo(INNER[11].x, INNER[11].y);
+            ctx.stroke();
+        }
+
+        function render() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, W, H);
+
+            let hourSegs = currentHour % 12;
+            if (hourSegs === 0) hourSegs = 12;
+            let minSegs = Math.floor(currentMin / 5);
+
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < hourSegs; i++) fillOuterSegment(i);
+            for (let i = 0; i < minSegs; i++) fillInnerSegment(i);
+
+            for (let i = 0; i < hourSegs; i++) drawLine(i, '#000');
+
+            drawInnerShape();
+
+            document.getElementById('debugInfo').innerHTML =
+                `<b>Inner Shape:</b> Horizontal top/bottom, Vertical left/right, Diagonal corners<br>` +
+                `<b>Top edge:</b> (${INNER[11].x},${INNER[11].y}) → (${INNER[1].x},${INNER[1].y}) [horizontal]<br>` +
+                `<b>Right edge:</b> (${INNER[2].x},${INNER[2].y}) → (${INNER[4].x},${INNER[4].y}) [vertical]<br>` +
+                `<b>Bottom edge:</b> (${INNER[7].x},${INNER[7].y}) → (${INNER[5].x},${INNER[5].y}) [horizontal]<br>` +
+                `<b>Left edge:</b> (${INNER[10].x},${INNER[10].y}) → (${INNER[8].x},${INNER[8].y}) [vertical]`;
+        }
+
+        function setTime(h, m) {
+            realTimeMode = false;
+            document.getElementById('realTimeBtn').classList.remove('active');
+            currentHour = h; currentMin = m;
+            document.getElementById('timeDisplay').textContent = `${h}:${m.toString().padStart(2, '0')}`;
+            document.getElementById('hourValue').textContent = h;
+            document.getElementById('hourSlider').value = h;
+            document.getElementById('minValue').textContent = m.toString().padStart(2, '0');
+            document.getElementById('minSlider').value = m;
+            render();
+        }
+
+        document.getElementById('hourSlider').addEventListener('input', e => {
+            currentHour = parseInt(e.target.value);
+            setTime(currentHour, currentMin);
+        });
+        document.getElementById('minSlider').addEventListener('input', e => {
+            currentMin = parseInt(e.target.value);
+            setTime(currentHour, currentMin);
+        });
+
+        document.getElementById('realTimeBtn').addEventListener('click', () => {
+            realTimeMode = true;
+            document.getElementById('realTimeBtn').classList.add('active');
+            updateRealTime();
+        });
+
+        function updateRealTime() {
+            if (realTimeMode) {
+                const now = new Date();
+                let h = now.getHours() % 12;
+                if (h === 0) h = 12;
+                currentHour = h;
+                currentMin = now.getMinutes();
+                document.getElementById('timeDisplay').textContent = `${h}:${currentMin.toString().padStart(2, '0')}`;
+                document.getElementById('hourValue').textContent = h;
+                document.getElementById('hourSlider').value = h;
+                document.getElementById('minValue').textContent = currentMin.toString().padStart(2, '0');
+                document.getElementById('minSlider').value = currentMin;
+                render();
+            }
+        }
+
+        updateRealTime();
+        setInterval(() => realTimeMode && updateRealTime(), 1000);
+    </script>
+</body>
+
+</html>

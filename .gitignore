@@ -1,0 +1,20 @@
+# Pebble build artifacts
+build
+.waf*
+*.pbw
+*.pebble-app.bin
+*.elf
+*.map
+
+# Editor settings
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Node modules (if using JS/TS)
+node_modules

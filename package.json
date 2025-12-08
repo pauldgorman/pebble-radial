@@ -1,0 +1,25 @@
+{
+  "name": "radial-time",
+  "author": "",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Radial Time",
+    "uuid": "e16a8cae-b853-4c8d-8dcd-7b41482afb2a",
+    "sdkVersion": "3",
+    "enableMultiJS": false,
+    "targetPlatforms": [
+      "diorite"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "resources": {
+      "media": []
+    }
+  }
+}
