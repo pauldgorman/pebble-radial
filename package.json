@@ -19,7 +19,14 @@
       "watchface": true
     },
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "IMAGE_MENU_ICON",
+          "file": "image.png",
+          "menuIcon": true
+        }
+      ]
     }
   }
 }

@@ -1,5 +1,7 @@
 # Radial Time ⏱️
 
+<img src="image.png" align="right" width="100">
+
 A unique geometric watchface for Pebble 2 (and other Pebble models) that displays time using radial segments and an inner octagonal indicator.
 
 ![Pebble 2](https://img.shields.io/badge/Platform-Pebble%202-black)
