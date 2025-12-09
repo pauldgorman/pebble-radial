@@ -20,6 +20,7 @@ The watchface features a distinctive time display:
 This project includes a web-based simulator (`simulator.html`) that allows you to preview the watchface logic and geometry directly in your browser without compiling.
 
 To use it:
+
 1. Open `simulator.html` in any web browser.
 2. Use the sliders to test different times.
 3. Observe how the segments fill and the octagon geometry behaves.
@@ -53,19 +54,23 @@ The compiled watchface will be generated at `build/radial-time.pbw`.
 ## Installing on Your Pebble
 
 ### 1. Enable Developer Mode
+
 1. Open the **Pebble app** on your phone.
 2. Go to **Settings** → **Developer Connection**.
 3. Enable it and note the IP address (e.g., `192.168.1.100`).
 
 ### 2. Install
+
 Ensure your computer and phone are on the same Wi-Fi network, then run:
 
 ```bash
 pebble install --phone 192.168.1.100
 ```
-*(Replace the IP address with your phone's actual IP)*
+
+_(Replace the IP address with your phone's actual IP)_
 
 ### Manual Installation
+
 Alternatively, you can copy the `build/radial-time.pbw` file to your phone and open it with the Pebble app.
 
 ## Customization
@@ -94,3 +99,4 @@ radial-time/
 ## License
 
 MIT License - Feel free to modify and share!
+#wsl bash -c "cd /mnt/c/Users/pauld/Desktop/Pebble/radial-time && ~/.local/bin/pebble build"
