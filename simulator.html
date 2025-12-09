@@ -175,29 +175,29 @@
         const LINE_WIDTH = 3;
 
         // Inner size
-        const INNER_V = Math.floor(H * 0.30);
-        const INNER_H = Math.floor(W * 0.30);
+        const INNER_V = Math.floor(H * 0.40);
+        const INNER_H = Math.floor(W * 0.40);
 
         // Inner bounds
-        const INNER_TOP = CY - INNER_V;     // 42
-        const INNER_BOTTOM = CY + INNER_V;  // 126
-        const INNER_LEFT = CX - INNER_H;    // 36
-        const INNER_RIGHT = CX + INNER_H;   // 108
+        const INNER_TOP = CY - INNER_V;     // 17
+        const INNER_BOTTOM = CY + INNER_V;  // 151
+        const INNER_LEFT = CX - INNER_H;    // 14 or 15
+        const INNER_RIGHT = CX + INNER_H;   // 129 or 130
 
-        // Inner points - calculated based on radial line intersections
+        // Inner points - calculated based on radial line intersections (40% size)
         const INNER = [
             { x: CX, y: INNER_TOP },           // 0: center of top edge
-            { x: 96, y: INNER_TOP },           // 1: right end of top edge
-            { x: INNER_RIGHT, y: 59 },         // 2: top of right edge
+            { x: 110, y: INNER_TOP },          // 1: right end of top edge
+            { x: INNER_RIGHT, y: 45 },         // 2: top of right edge
             { x: INNER_RIGHT, y: CY },         // 3: center of right edge
-            { x: INNER_RIGHT, y: 109 },        // 4: bottom of right edge
-            { x: 96, y: INNER_BOTTOM },        // 5: right end of bottom edge
+            { x: INNER_RIGHT, y: 123 },        // 4: bottom of right edge
+            { x: 110, y: INNER_BOTTOM },       // 5: right end of bottom edge
             { x: CX, y: INNER_BOTTOM },        // 6: center of bottom edge
-            { x: 48, y: INNER_BOTTOM },        // 7: left end of bottom edge
-            { x: INNER_LEFT, y: 109 },         // 8: bottom of left edge
+            { x: 34, y: INNER_BOTTOM },        // 7: left end of bottom edge
+            { x: INNER_LEFT, y: 123 },         // 8: bottom of left edge
             { x: INNER_LEFT, y: CY },          // 9: center of left edge
-            { x: INNER_LEFT, y: 59 },          // 10: top of left edge
-            { x: 48, y: INNER_TOP },           // 11: left end of top edge
+            { x: INNER_LEFT, y: 45 },          // 10: top of left edge
+            { x: 34, y: INNER_TOP },           // 11: left end of top edge
         ];
 
         // Screen edge points
@@ -309,9 +309,11 @@
             for (let i = 0; i < hourSegs; i++) fillOuterSegment(i);
             for (let i = 0; i < minSegs; i++) fillInnerSegment(i);
 
-            for (let i = 0; i < hourSegs; i++) drawLine(i, '#000');
-
+            // Draw inner octagon shape first
             drawInnerShape();
+
+            // Draw all 12 radial lines last so they appear on top
+            for (let i = 0; i < 12; i++) drawLine(i, '#000');
 
             document.getElementById('debugInfo').innerHTML =
                 `<b>Inner Shape:</b> Horizontal top/bottom, Vertical left/right, Diagonal corners<br>` +

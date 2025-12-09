@@ -13,8 +13,8 @@
 #define LINE_WIDTH 4
 
 // Inner size (configurable)
-#define INNER_V (H * 30 / 100) // ~50 - vertical distance from center
-#define INNER_H (W * 30 / 100) // ~43 - horizontal distance from center
+#define INNER_V (H * 40 / 100) // ~67 - vertical distance from center
+#define INNER_H (W * 40 / 100) // ~58 - horizontal distance from center
 
 // Inner rectangle bounds
 #define INNER_TOP    (CY - INNER_V)   // 42
@@ -22,56 +22,64 @@
 #define INNER_LEFT   (CX - INNER_H)   // 36
 #define INNER_RIGHT  (CX + INNER_H)   // 108
 
-// Calculate where each radial line hits its edge
-// Top edge (y = INNER_TOP): lines 11, 0, 1
-// Line 0: (CX, INNER_TOP)
-// Line 1: x = CX + (CX * INNER_V / CY) = 72 + (72 * 42 / 84) = 72 + 36 = 108... but that's past INNER_RIGHT
-// Let's use the intersection with y = INNER_TOP
+// Calculate where each radial line hits the octagon edge
+// With INNER_V = 67 and INNER_H = 58:
+// INNER_TOP = 17, INNER_BOTTOM = 151, INNER_LEFT = 14, INNER_RIGHT = 130
+
+// Line 0: (CX, INNER_TOP) - straight up
 #define P0_X CX
 #define P0_Y INNER_TOP
 
-// Line 1 goes from (72,84) to (120,0). At y=INNER_TOP: t = (84-42)/84 = 0.5, x = 72 + 48*0.5 = 96
-#define P1_X 96
+// Line 1 goes from (72,84) to (120,0). Direction: (48, -84)
+// At y=INNER_TOP (17): t = (84-17)/84 = 0.797619, x = 72 + 48*0.797619 = 110
+#define P1_X 110
 #define P1_Y INNER_TOP
 
-// Line 2 goes from (72,84) to (144,35). Hits right edge: t = 36/72 = 0.5, y = 84 - 49*0.5 = 59
+// Line 2 goes from (72,84) to (144,35). Direction: (72, -49)
+// Hits right edge at x=INNER_RIGHT (130): t = (130-72)/72 = 0.8056, y = 84 - 49*0.8056 = 45
 #define P2_X INNER_RIGHT
-#define P2_Y 59
+#define P2_Y 45
 
-// Line 3: (INNER_RIGHT, CY)
+// Line 3: (INNER_RIGHT, CY) - straight right
 #define P3_X INNER_RIGHT
 #define P3_Y CY
 
-// Line 4 goes from (72,84) to (144,133). Hits right edge: t = 0.5, y = 84 + 49*0.5 = 109
+// Line 4 goes from (72,84) to (144,133). Direction: (72, 49)
+// Hits right edge at x=INNER_RIGHT (130): t = 0.8056, y = 84 + 49*0.8056 = 123
 #define P4_X INNER_RIGHT
-#define P4_Y 109
+#define P4_Y 123
 
-// Line 5 goes from (72,84) to (120,168). At y=INNER_BOTTOM: t = 42/84 = 0.5, x = 72 + 48*0.5 = 96
-#define P5_X 96
+// Line 5 goes from (72,84) to (120,168). Direction: (48, 84)
+// At y=INNER_BOTTOM (151): t = (151-84)/84 = 0.797619, x = 72 + 48*0.797619 = 110
+#define P5_X 110
 #define P5_Y INNER_BOTTOM
 
-// Line 6: (CX, INNER_BOTTOM)
+// Line 6: (CX, INNER_BOTTOM) - straight down
 #define P6_X CX
 #define P6_Y INNER_BOTTOM
 
-// Line 7 goes from (72,84) to (24,168). At y=INNER_BOTTOM: t = 0.5, x = 72 - 48*0.5 = 48
-#define P7_X 48
+// Line 7 goes from (72,84) to (24,168). Direction: (-48, 84)
+// At y=INNER_BOTTOM (151): t = 0.797619, x = 72 - 48*0.797619 = 34
+#define P7_X 34
 #define P7_Y INNER_BOTTOM
 
-// Line 8 goes from (72,84) to (0,133). Hits left edge: t = 36/72 = 0.5, y = 84 + 49*0.5 = 109
+// Line 8 goes from (72,84) to (0,133). Direction: (-72, 49)
+// Hits left edge at x=INNER_LEFT (14): t = (72-14)/72 = 0.8056, y = 84 + 49*0.8056 = 123
 #define P8_X INNER_LEFT
-#define P8_Y 109
+#define P8_Y 123
 
-// Line 9: (INNER_LEFT, CY)
+// Line 9: (INNER_LEFT, CY) - straight left
 #define P9_X INNER_LEFT
 #define P9_Y CY
 
-// Line 10 goes from (72,84) to (0,35). Hits left edge: t = 0.5, y = 84 - 49*0.5 = 59
+// Line 10 goes from (72,84) to (0,35). Direction: (-72, -49)
+// Hits left edge at x=INNER_LEFT (14): t = 0.8056, y = 84 - 49*0.8056 = 45
 #define P10_X INNER_LEFT
-#define P10_Y 59
+#define P10_Y 45
 
-// Line 11 goes from (72,84) to (24,0). At y=INNER_TOP: t = 0.5, x = 72 - 48*0.5 = 48
-#define P11_X 48
+// Line 11 goes from (72,84) to (24,0). Direction: (-48, -84)
+// At y=INNER_TOP (17): t = 0.797619, x = 72 - 48*0.797619 = 34
+#define P11_X 34
 #define P11_Y INNER_TOP
 
 static Window *s_window;
@@ -172,14 +180,16 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
     for (int i = 0; i < hour_segs; i++) fill_outer_segment(ctx, i);
     for (int i = 0; i < min_segs; i++) fill_inner_segment(ctx, i);
     
+    // Draw inner octagon shape first
     graphics_context_set_stroke_width(ctx, LINE_WIDTH);
-    for (int i = 0; i < hour_segs; i++) {
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    draw_inner_shape(ctx);
+    
+    // Draw all 12 radial lines last so they appear on top
+    for (int i = 0; i < 12; i++) {
         graphics_context_set_stroke_color(ctx, GColorBlack);
         draw_radial_line(ctx, i);
     }
-    
-    graphics_context_set_stroke_color(ctx, GColorBlack);
-    draw_inner_shape(ctx);
 }
 
 static void update_time() {

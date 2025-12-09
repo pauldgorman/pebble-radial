@@ -1,0 +1,5 @@
+- fix image display in app
+- fix image display in github
+- remove simulator code
+- fix thin lines when minute segments go beyond hour segments
+- think of a way to represent minutes < 5mins
